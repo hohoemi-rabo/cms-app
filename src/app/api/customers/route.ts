@@ -9,7 +9,7 @@ export async function GET(request: NextRequest) {
     // クエリパラメータの取得
     const page = searchParams.get('page') ? parseInt(searchParams.get('page')!) : 1
     const limit = searchParams.get('limit') ? parseInt(searchParams.get('limit')!) : 20
-    const sortBy = searchParams.get('sortBy') as 'name' | 'name_kana' | 'created_at' | 'updated_at' | undefined
+    const sortBy = searchParams.get('sortBy') as 'name' | 'created_at' | 'updated_at' | undefined
     const sortOrder = searchParams.get('sortOrder') as 'asc' | 'desc' | undefined
 
     // 顧客データ取得

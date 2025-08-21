@@ -5,7 +5,7 @@ import type { Customer } from '@/types/supabase'
 export interface GetCustomersParams {
   page?: number
   limit?: number
-  sortBy?: 'name' | 'name_kana' | 'created_at' | 'updated_at'
+  sortBy?: 'name' | 'created_at' | 'updated_at'
   sortOrder?: 'asc' | 'desc'
 }
 
@@ -40,7 +40,6 @@ export async function getCustomers(
     let query = supabaseServer
       .from('customers')
       .select('*', { count: 'exact' })
-      .is('deleted_at', null) // 論理削除されていないデータのみ
 
     // ソート設定
     query = query.order(sortBy, { ascending: sortOrder === 'asc' })
@@ -52,6 +51,9 @@ export async function getCustomers(
     const { data, error, count } = await query
 
     if (error) {
+      console.error('Supabase error in getCustomers:', error)
+      console.error('Query details:', { sortBy, sortOrder, page, limit, offset })
+      console.error('Full error object:', JSON.stringify(error, null, 2))
       const errorResponse = handleSupabaseError(error)
       throw new Error(errorResponse.message)
     }
@@ -82,7 +84,6 @@ export async function getCustomersCount(): Promise<number> {
     const { count, error } = await supabaseServer
       .from('customers')
       .select('*', { count: 'exact', head: true })
-      .is('deleted_at', null)
 
     if (error) {
       const errorResponse = handleSupabaseError(error)
@@ -106,7 +107,6 @@ export async function getRecentCustomers(limit: number = 5): Promise<Customer[]>
     const { data, error } = await supabaseServer
       .from('customers')
       .select('*')
-      .is('deleted_at', null)
       .order('created_at', { ascending: false })
       .limit(limit)
 

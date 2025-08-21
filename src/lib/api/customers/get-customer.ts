@@ -1,9 +1,29 @@
 import { supabaseServer } from '@/lib/supabase/server'
 import { handleSupabaseError } from '@/lib/supabase/error-handler'
-import type { Customer, Tag } from '@/types/supabase'
+import type { Tag } from '@/types/supabase'
 
-// 顧客とタグを含む型定義
-export interface CustomerWithTags extends Customer {
+// 実際のデータベースフィールドに基づく顧客型定義
+export interface CustomerWithTags {
+  id: string
+  customer_type: 'company' | 'personal'
+  company_name?: string | null
+  name: string
+  name_kana?: string | null
+  class?: string | null
+  birth_date?: string | null
+  postal_code?: string | null
+  prefecture?: string | null
+  city?: string | null
+  address?: string | null
+  phone?: string | null
+  email?: string | null
+  contract_start_date?: string | null
+  invoice_method?: 'mail' | 'email' | null
+  payment_terms?: string | null
+  memo?: string | null
+  created_at: string
+  updated_at?: string | null
+  deleted_at?: string | null
   tags: Tag[]
 }
 
@@ -14,9 +34,8 @@ export interface CustomerWithTags extends Customer {
  */
 export async function getCustomerById(id: string): Promise<CustomerWithTags | null> {
   try {
-    // UUID形式の簡単なバリデーション
-    const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i
-    if (!uuidRegex.test(id)) {
+    // IDの基本的なバリデーション（空文字チェックなど）
+    if (!id || typeof id !== 'string') {
       return null
     }
 
@@ -25,14 +44,19 @@ export async function getCustomerById(id: string): Promise<CustomerWithTags | nu
       .from('customers')
       .select('*')
       .eq('id', id)
-      .is('deleted_at', null)
       .single()
 
     if (customerError) {
+      console.error('Supabase customer fetch error:', customerError)
       if (customerError.code === 'PGRST116') {
         // データが見つからない場合
         return null
       }
+      // エラーの詳細をログ出力
+      console.error('Customer ID:', id)
+      console.error('Error code:', customerError.code)
+      console.error('Error message:', customerError.message)
+      
       const errorResponse = handleSupabaseError(customerError)
       throw new Error(errorResponse.message)
     }
@@ -89,8 +113,7 @@ export async function getCustomerById(id: string): Promise<CustomerWithTags | nu
  */
 export async function customerExists(id: string): Promise<boolean> {
   try {
-    const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i
-    if (!uuidRegex.test(id)) {
+    if (!id || typeof id !== 'string') {
       return false
     }
 
