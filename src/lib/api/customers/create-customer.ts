@@ -5,21 +5,21 @@ import type { Customer } from '@/types/supabase'
 
 export interface CreateCustomerInput {
   customer_type: 'company' | 'personal'
-  company_name?: string
+  company_name?: string | null
   name: string
-  name_kana?: string
-  class?: string
-  birth_date?: string
-  postal_code?: string
-  prefecture?: string
-  city?: string
-  address?: string
-  phone?: string
-  email?: string
-  contract_start_date?: string
-  invoice_method?: 'mail' | 'email'
-  payment_terms?: string
-  memo?: string
+  name_kana?: string | null
+  class?: string | null
+  birth_date?: string | null
+  postal_code?: string | null
+  prefecture?: string | null
+  city?: string | null
+  address?: string | null
+  phone?: string | null
+  email?: string | null
+  contract_start_date?: string | null
+  invoice_method?: 'mail' | 'email' | null
+  payment_terms?: string | null
+  memo?: string | null
   tagIds?: string[]
 }
 
