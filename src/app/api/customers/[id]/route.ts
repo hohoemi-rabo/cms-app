@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getCustomerById } from '@/lib/api/customers/get-customer'
 import { updateCustomer, type UpdateCustomerInput, validateUpdateCustomerInput } from '@/lib/api/customers/update-customer'
+import { deleteCustomer } from '@/lib/api/customers/delete-customer'
 
 export async function GET(
   request: NextRequest,
@@ -102,6 +103,61 @@ export async function PUT(
     return NextResponse.json(
       { 
         error: error instanceof Error ? error.message : 'Failed to update customer' 
+      },
+      { status: 500 }
+    )
+  }
+}
+
+export async function DELETE(
+  request: NextRequest,
+  { params }: { params: Promise<{ id: string }> }
+) {
+  try {
+    const { id } = await params
+    
+    // IDチェック
+    if (!id) {
+      return NextResponse.json(
+        { error: '顧客IDが指定されていません' },
+        { status: 400 }
+      )
+    }
+
+    // 顧客削除
+    const result = await deleteCustomer(id)
+
+    return NextResponse.json({
+      success: result.success,
+      message: result.message,
+      data: {
+        customerId: result.customerId,
+        deletedAt: result.deletedAt
+      }
+    }, { status: 200 })
+
+  } catch (error) {
+    console.error('Delete Customer API Error:', error)
+    
+    // 特定のエラーメッセージに応じてステータスコードを変更
+    if (error instanceof Error) {
+      if (error.message.includes('顧客が見つかりません')) {
+        return NextResponse.json(
+          { error: error.message },
+          { status: 404 }
+        )
+      }
+      if (error.message.includes('既に削除されています') || error.message.includes('形式が正しくありません')) {
+        return NextResponse.json(
+          { error: error.message },
+          { status: 400 }
+        )
+      }
+    }
+    
+    return NextResponse.json(
+      { 
+        error: error instanceof Error ? error.message : 'Failed to delete customer' 
       },
       { status: 500 }
     )
