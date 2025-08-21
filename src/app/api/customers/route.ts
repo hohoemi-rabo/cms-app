@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getCustomers } from '@/lib/api/customers/get-customers'
+import { createCustomer, type CreateCustomerInput, validateCustomerInput } from '@/lib/api/customers/create-customer'
 
 export async function GET(request: NextRequest) {
   try {
@@ -25,6 +26,52 @@ export async function GET(request: NextRequest) {
     return NextResponse.json(
       { 
         error: error instanceof Error ? error.message : 'Failed to fetch customers' 
+      },
+      { status: 500 }
+    )
+  }
+}
+
+export async function POST(request: NextRequest) {
+  try {
+    const body = await request.json()
+    
+    // 入力データの型チェック
+    if (!body || typeof body !== 'object') {
+      return NextResponse.json(
+        { error: '不正なリクエストデータです' },
+        { status: 400 }
+      )
+    }
+
+    const input = body as CreateCustomerInput
+
+    // バリデーション
+    const validationErrors = validateCustomerInput(input)
+    if (validationErrors.length > 0) {
+      return NextResponse.json(
+        { 
+          error: '入力データが正しくありません',
+          validationErrors
+        },
+        { status: 400 }
+      )
+    }
+
+    // 顧客作成
+    const customer = await createCustomer(input)
+
+    return NextResponse.json({
+      success: true,
+      data: customer,
+      message: '顧客を作成しました'
+    }, { status: 201 })
+
+  } catch (error) {
+    console.error('Create Customer API Error:', error)
+    return NextResponse.json(
+      { 
+        error: error instanceof Error ? error.message : 'Failed to create customer' 
       },
       { status: 500 }
     )
