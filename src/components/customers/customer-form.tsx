@@ -5,6 +5,7 @@ import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { customerSchema, type CustomerFormData } from '@/lib/validations/customer'
 import { Button } from '@/components/ui/button'
+import { LoadingButton } from '@/components/ui/loading-button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
@@ -386,9 +387,13 @@ export function CustomerForm({
         >
           キャンセル
         </Button>
-        <Button type="submit" disabled={isPending}>
-          {isPending ? '処理中...' : submitLabel}
-        </Button>
+        <LoadingButton 
+          type="submit" 
+          loading={isPending}
+          loadingText="処理中..."
+        >
+          {submitLabel}
+        </LoadingButton>
       </div>
     </form>
   )
