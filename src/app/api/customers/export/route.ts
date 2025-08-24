@@ -38,7 +38,7 @@ async function getAllCustomersWithTags(): Promise<CustomerWithTags[]> {
           .eq('customer_id', customer.id)
 
         // タグ情報を整形
-        const tags = customerTags?.map((ct: any) => ct.tags).filter(Boolean) || []
+        const tags = customerTags?.flatMap((ct: { tags: { name: string }[] }) => ct.tags).filter(Boolean) || []
 
         return {
           ...customer,
@@ -141,7 +141,7 @@ export async function POST(request: NextRequest) {
           `)
           .eq('customer_id', customer.id)
 
-        const tags = customerTags?.map((ct: any) => ct.tags).filter(Boolean) || []
+        const tags = customerTags?.flatMap((ct: { tags: { name: string }[] }) => ct.tags).filter(Boolean) || []
 
         return {
           ...customer,

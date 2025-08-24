@@ -2,18 +2,37 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Users, UserPlus, FileText, Database } from 'lucide-react'
 import Link from 'next/link'
 
-export default function HomePage() {
+async function getStats() {
+  try {
+    const response = await fetch(`${process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000'}/api/stats`, {
+      cache: 'no-store' // Always fetch fresh data
+    })
+    
+    if (!response.ok) {
+      throw new Error('Failed to fetch stats')
+    }
+    
+    return await response.json()
+  } catch (error) {
+    console.error('Error fetching stats:', error)
+    return { customers: 0, tags: 0 }
+  }
+}
+
+export default async function HomePage() {
+  const statsData = await getStats()
+  
   const stats = [
     {
       title: '登録顧客数',
-      value: '0',
+      value: statsData.customers.toString(),
       description: '現在の顧客数',
       icon: Users,
       color: 'text-blue-600'
     },
     {
       title: 'タグ数',
-      value: '4',
+      value: statsData.tags.toString(),
       description: '利用可能なタグ',
       icon: Database,
       color: 'text-green-600'

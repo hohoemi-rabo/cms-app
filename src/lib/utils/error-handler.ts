@@ -10,7 +10,7 @@ export interface ErrorResponse {
     message: string
     code: string
     statusCode: number
-    details?: any
+    details?: Record<string, unknown>
     timestamp: string
     requestId?: string
   }
@@ -52,7 +52,7 @@ export function parseError(error: unknown): {
   message: string
   code: string
   statusCode: number
-  details?: any
+  details?: Record<string, unknown>
 } {
   // AppErrorインスタンスの場合
   if (error instanceof AppError) {
@@ -92,7 +92,7 @@ export function parseError(error: unknown): {
     message: '不明なエラーが発生しました',
     code: 'UNKNOWN_ERROR',
     statusCode: 500,
-    details: process.env.NODE_ENV === 'development' ? error : undefined
+    details: process.env.NODE_ENV === 'development' ? { error: String(error) } : undefined
   }
 }
 
@@ -148,7 +148,7 @@ export function handleClientError(error: unknown): {
 /**
  * 非同期関数のエラーをキャッチするラッパー
  */
-export function asyncHandler<T extends (...args: any[]) => Promise<any>>(
+export function asyncHandler<T extends (...args: unknown[]) => Promise<unknown>>(
   fn: T
 ): T {
   return (async (...args: Parameters<T>) => {

@@ -17,6 +17,9 @@ const geistMono = Geist_Mono({
 export const metadata: Metadata = {
   title: "顧客管理システム",
   description: "Customer Management System",
+  icons: {
+    icon: '/favicon.ico',
+  },
 };
 
 export default function RootLayout({

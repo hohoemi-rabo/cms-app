@@ -1,19 +1,40 @@
 import Papa from 'papaparse'
 import { z } from 'zod'
 
+// パースされた顧客データの型定義
+export interface ParsedCustomerData {
+  customer_type: 'personal' | 'company'
+  company_name?: string | null
+  name: string
+  name_kana?: string | null
+  class?: string | null
+  birth_date?: string | null
+  postal_code?: string | null
+  prefecture?: string | null
+  city?: string | null
+  address?: string | null
+  phone?: string | null
+  email?: string | null
+  contract_start_date?: string | null
+  invoice_method?: 'mail' | 'email' | null
+  payment_terms?: string | null
+  tags?: string | null
+  memo?: string | null
+}
+
 // インポート結果の型定義
 export interface ImportResult {
   success: number
   failed: number
   errors: ImportError[]
-  data: any[]
+  data: ParsedCustomerData[]
 }
 
 export interface ImportError {
   row: number
   field?: string
   message: string
-  data?: any
+  data?: Record<string, unknown>
 }
 
 // CSVヘッダーのマッピング定義
@@ -96,8 +117,8 @@ function convertDateToISO(dateStr: string | null | undefined): string | null {
 }
 
 // CSVデータを顧客データ形式に変換
-function mapRowToCustomerData(headers: string[], values: string[]): any {
-  const data: any = {}
+function mapRowToCustomerData(headers: string[], values: string[]): Record<string, unknown> {
+  const data: Record<string, unknown> = {}
   
   headers.forEach((header, index) => {
     const fieldName = HEADER_MAPPING[header]
@@ -147,11 +168,10 @@ export async function parseCustomerCSVText(csvText: string): Promise<{
 }> {
   return new Promise((resolve, reject) => {
     const errors: ImportError[] = []
-    const validData: any[] = []
+    const validData: ParsedCustomerData[] = []
     let headers: string[] = []
     
-    const results = Papa.parse(csvText, {
-      encoding: 'UTF-8',
+    const results = Papa.parse<string[]>(csvText, {
       skipEmptyLines: true,
     })
     
@@ -160,11 +180,12 @@ export async function parseCustomerCSVText(csvText: string): Promise<{
         errors.push({
           row: error.row ?? 0,
           message: error.message,
+          data: { error: error.code }
         })
       })
     }
     
-    const rows = results.data as string[][]
+    const rows = results.data
     
     if (rows.length === 0) {
       reject(new Error('CSVファイルが空です'))
@@ -201,7 +222,12 @@ export async function parseCustomerCSVText(csvText: string): Promise<{
         const validationResult = customerImportSchema.safeParse(rowData)
         
         if (validationResult.success) {
-          validData.push(validationResult.data)
+          // 顧客種別の最終変換
+          const finalData = {
+            ...validationResult.data,
+            customer_type: normalizeCustomerType(validationResult.data.customer_type)
+          }
+          validData.push(finalData)
         } else {
           validationResult.error.issues.forEach((issue) => {
             errors.push({
@@ -216,7 +242,7 @@ export async function parseCustomerCSVText(csvText: string): Promise<{
         errors.push({
           row: i + 1,
           message: error instanceof Error ? error.message : '行の処理中にエラーが発生しました',
-          data: values,
+          data: { values },
         })
       }
     }

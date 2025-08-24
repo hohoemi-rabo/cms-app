@@ -1,19 +1,20 @@
 import Papa from 'papaparse'
 import { z } from 'zod'
+import type { ParsedCustomerData } from './csv-import-server'
 
 // インポート結果の型定義
 export interface ImportResult {
   success: number
   failed: number
   errors: ImportError[]
-  data: any[]
+  data: ParsedCustomerData[]
 }
 
 export interface ImportError {
   row: number
   field?: string
   message: string
-  data?: any
+  data?: Record<string, unknown>
 }
 
 // CSVヘッダーのマッピング定義
@@ -193,11 +194,11 @@ export async function parseCustomerCSV(file: File): Promise<{
             if (validationResult.success) {
               validData.push(validationResult.data)
             } else {
-              validationResult.error.errors.forEach((error) => {
+              validationResult.error.issues.forEach((issue) => {
                 errors.push({
                   row: i + 1,
-                  field: error.path.join('.'),
-                  message: error.message,
+                  field: issue.path.join('.'),
+                  message: issue.message,
                   data: rowData,
                 })
               })
@@ -206,7 +207,7 @@ export async function parseCustomerCSV(file: File): Promise<{
             errors.push({
               row: i + 1,
               message: error instanceof Error ? error.message : '行の処理中にエラーが発生しました',
-              data: values,
+              data: { values },
             })
           }
         }

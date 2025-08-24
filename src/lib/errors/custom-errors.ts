@@ -6,7 +6,7 @@ export class AppError extends Error {
     message: string,
     public code: string,
     public statusCode: number = 500,
-    public details?: any
+    public details?: Record<string, unknown>
   ) {
     super(message)
     this.name = 'AppError'
@@ -32,7 +32,7 @@ export class ValidationError extends AppError {
     message: string = 'バリデーションエラーが発生しました',
     public errors: Array<{ field?: string; message: string }> = []
   ) {
-    super(message, 'VALIDATION_ERROR', 400, errors)
+    super(message, 'VALIDATION_ERROR', 400, { errors })
     this.name = 'ValidationError'
   }
 }
@@ -59,9 +59,9 @@ export class NotFoundError extends AppError {
 export class DatabaseError extends AppError {
   constructor(
     message: string = 'データベースエラーが発生しました',
-    originalError?: any
+    originalError?: Error
   ) {
-    super(message, 'DATABASE_ERROR', 500, originalError)
+    super(message, 'DATABASE_ERROR', 500, { originalError: originalError?.message })
     this.name = 'DatabaseError'
   }
 }
@@ -97,9 +97,9 @@ export class ExternalAPIError extends AppError {
   constructor(
     service: string,
     message: string = '外部サービスとの通信に失敗しました',
-    originalError?: any
+    originalError?: Error
   ) {
-    super(`${service}: ${message}`, 'EXTERNAL_API_ERROR', 502, originalError)
+    super(`${service}: ${message}`, 'EXTERNAL_API_ERROR', 502, { originalError: originalError?.message })
     this.name = 'ExternalAPIError'
   }
 }
@@ -123,7 +123,7 @@ export class RateLimitError extends AppError {
 export class BusinessLogicError extends AppError {
   constructor(
     message: string,
-    details?: any
+    details?: Record<string, unknown>
   ) {
     super(message, 'BUSINESS_LOGIC_ERROR', 400, details)
     this.name = 'BusinessLogicError'
