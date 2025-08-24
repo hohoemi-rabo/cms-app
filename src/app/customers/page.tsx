@@ -24,6 +24,7 @@ import {
   Eye
 } from 'lucide-react'
 import { toast } from 'sonner'
+import { ExportButton } from '@/components/customers/export-button'
 
 interface Customer {
   id: string
@@ -194,10 +195,13 @@ export default function CustomersPage() {
             全{totalCount}件の顧客データ
           </p>
         </div>
-        <Button onClick={() => router.push('/customers/new')} size="lg">
-          <UserPlus className="h-5 w-5 mr-2" />
-          新規顧客登録
-        </Button>
+        <div className="flex gap-3">
+          <ExportButton totalCount={totalCount} variant="outline" />
+          <Button onClick={() => router.push('/customers/new')} size="lg">
+            <UserPlus className="h-5 w-5 mr-2" />
+            新規顧客登録
+          </Button>
+        </div>
       </div>
 
       {/* 検索・フィルター */}
