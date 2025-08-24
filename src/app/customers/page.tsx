@@ -21,7 +21,8 @@ import {
   Tag,
   Edit,
   Trash2,
-  Eye
+  Eye,
+  Upload
 } from 'lucide-react'
 import { toast } from 'sonner'
 import { ExportButton } from '@/components/customers/export-button'
@@ -196,6 +197,10 @@ export default function CustomersPage() {
           </p>
         </div>
         <div className="flex gap-3">
+          <Button onClick={() => router.push('/customers/import')} variant="outline">
+            <Upload className="h-4 w-4 mr-2" />
+            インポート
+          </Button>
           <ExportButton totalCount={totalCount} variant="outline" />
           <Button onClick={() => router.push('/customers/new')} size="lg">
             <UserPlus className="h-5 w-5 mr-2" />
