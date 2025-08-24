@@ -2,6 +2,8 @@ import { NextRequest, NextResponse } from 'next/server'
 import { getCustomerById } from '@/lib/api/customers/get-customer'
 import { updateCustomer, type UpdateCustomerInput, validateUpdateCustomerInput } from '@/lib/api/customers/update-customer'
 import { deleteCustomer } from '@/lib/api/customers/delete-customer'
+import { handleApiError } from '@/lib/utils/error-handler'
+import { NotFoundError, ValidationError } from '@/lib/errors/custom-errors'
 
 export async function GET(
   request: NextRequest,
@@ -11,19 +13,15 @@ export async function GET(
     const { id } = await params
 
     if (!id) {
-      return NextResponse.json(
-        { error: '顧客IDが指定されていません' },
-        { status: 400 }
-      )
+      throw new ValidationError('顧客IDが指定されていません', [
+        { field: 'id', message: '顧客IDは必須です' }
+      ])
     }
 
     const customer = await getCustomerById(id)
 
     if (!customer) {
-      return NextResponse.json(
-        { error: '指定された顧客が見つかりません' },
-        { status: 404 }
-      )
+      throw new NotFoundError('顧客', id)
     }
 
     return NextResponse.json({
@@ -31,13 +29,7 @@ export async function GET(
       data: customer
     })
   } catch (error) {
-    console.error('Get Customer API Error:', error)
-    return NextResponse.json(
-      { 
-        error: error instanceof Error ? error.message : 'Failed to get customer' 
-      },
-      { status: 500 }
-    )
+    return handleApiError(error)
   }
 }
 
