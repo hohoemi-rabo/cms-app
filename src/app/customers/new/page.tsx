@@ -31,20 +31,20 @@ async function getClasses() {
     
     if (error) {
       console.error('Failed to fetch classes:', error)
-      return ['月-AM', '月-PM', '火-AM', '火-PM', '水-AM', '水-PM', '木-AM', '木-PM', '金-AM', '金-PM', '土-AM', '土-PM']
+      return ['月-AM', '月-PM', '火-AM', '火-PM', '水-AM', '水-PM', '木-AM', '木-PM', '金-AM', '金-PM', '個別']
     }
     
     // 重複を除去
     const uniqueClasses = [...new Set(data?.map(item => item.class).filter(Boolean))]
     
     // デフォルトのクラスとマージ
-    const defaultClasses = ['月-AM', '月-PM', '火-AM', '火-PM', '水-AM', '水-PM', '木-AM', '木-PM', '金-AM', '金-PM', '土-AM', '土-PM']
+    const defaultClasses = ['月-AM', '月-PM', '火-AM', '火-PM', '水-AM', '水-PM', '木-AM', '木-PM', '金-AM', '金-PM', '個別']
     const allClasses = [...new Set([...uniqueClasses, ...defaultClasses])]
     
     return allClasses.sort()
   } catch (error) {
     console.error('Failed to fetch classes:', error)
-    return ['月-AM', '月-PM', '火-AM', '火-PM', '水-AM', '水-PM', '木-AM', '木-PM', '金-AM', '金-PM', '土-AM', '土-PM']
+    return ['月-AM', '月-PM', '火-AM', '火-PM', '水-AM', '水-PM', '木-AM', '木-PM', '金-AM', '金-PM', '個別']
   }
 }
 

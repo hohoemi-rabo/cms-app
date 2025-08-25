@@ -31,7 +31,7 @@ export function CustomerForm({
   submitLabel = '保存',
   isPending = false,
   availableTags = [],
-  availableClasses = ['月-AM', '月-PM', '火-AM', '火-PM', '水-AM', '水-PM', '木-AM', '木-PM', '金-AM', '金-PM', '土-AM', '土-PM']
+  availableClasses = ['月-AM', '月-PM', '火-AM', '火-PM', '水-AM', '水-PM', '木-AM', '木-PM', '金-AM', '金-PM', '個別'] // Updated
 }: CustomerFormProps) {
   const [selectedTags, setSelectedTags] = useState<string[]>(initialData?.tagIds || [])
   
