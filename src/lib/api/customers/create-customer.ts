@@ -81,12 +81,13 @@ export function validateCustomerInput(input: CreateCustomerInput): ValidationErr
 async function attachTagsToCustomer(customerId: string, tagIds: string[]): Promise<void> {
   if (!tagIds || tagIds.length === 0) return
 
+  const supabase = supabaseServer
   const customerTags = tagIds.map(tagId => ({
     customer_id: customerId,
     tag_id: tagId
   }))
 
-  const { error } = await supabaseServer
+  const { error } = await supabase
     .from('customer_tags')
     .insert(customerTags)
 
@@ -103,6 +104,7 @@ async function attachTagsToCustomer(customerId: string, tagIds: string[]): Promi
  * @returns 作成された顧客データ（タグ情報含む）
  */
 export async function createCustomer(input: CreateCustomerInput): Promise<CustomerWithTags> {
+  const supabase = supabaseServer
   try {
     // 1. バリデーション
     const validationErrors = validateCustomerInput(input)
@@ -115,7 +117,7 @@ export async function createCustomer(input: CreateCustomerInput): Promise<Custom
     const { tagIds, ...customerData } = input
     
     // 3. 顧客データを挿入
-    const { data: customer, error: insertError } = await supabaseServer
+    const { data: customer, error: insertError } = await supabase
       .from('customers')
       .insert({
         ...customerData,

@@ -1,6 +1,12 @@
 import { supabaseServer } from '@/lib/supabase/server'
 import { handleSupabaseError } from '@/lib/supabase/error-handler'
-import type { Customer } from '@/types/supabase'
+import type { Customer, Tag } from '@/types/supabase'
+
+// 検索結果用の顧客型（タグ情報含む）
+export interface CustomerWithTags extends Omit<Customer, 'id'> {
+  id: string
+  tags: Tag[]
+}
 
 export interface SearchCustomersParams {
   searchText?: string
@@ -14,7 +20,7 @@ export interface SearchCustomersParams {
 }
 
 export interface SearchCustomersResponse {
-  data: Customer[]
+  data: CustomerWithTags[]
   totalCount: number
   page: number
   totalPages: number
@@ -23,13 +29,14 @@ export interface SearchCustomersResponse {
 }
 
 /**
- * 顧客を検索する - working with-tags APIベースの実装
+ * 顧客を検索する - タグ情報含む
  * @param params - 検索パラメータ
  * @returns 検索結果とページング情報
  */
 export async function searchCustomers(
   params: SearchCustomersParams = {}
 ): Promise<SearchCustomersResponse> {
+  const supabase = supabaseServer
   try {
     const {
       customerType,
@@ -42,11 +49,10 @@ export async function searchCustomers(
 
     const offset = (page - 1) * limit
 
-    // 1. ベースクエリを作成
-    let query = supabaseServer
+    // 1. 顧客の基本情報を取得
+    let query = supabase
       .from('customers')
       .select('*')
-      .is('deleted_at', null)
     
     // 2. フィルタ条件を適用
     if (customerType) {
@@ -69,11 +75,50 @@ export async function searchCustomers(
       throw new Error(errorResponse.message)
     }
 
-    // 2. 総数を取得（同じフィルタ条件で）
-    let countQuery = supabaseServer
+    // 4. 各顧客のタグを取得
+    const customersWithTags: CustomerWithTags[] = []
+    
+    if (customers && customers.length > 0) {
+      console.log(`Fetching tags for ${customers.length} customers`)
+      
+      for (const customer of customers) {
+        // 各顧客のタグを取得
+        const { data: customerTags, error: tagsError } = await supabase
+          .from('customer_tags')
+          .select(`
+            tags (
+              id,
+              name,
+              created_at
+            )
+          `)
+          .eq('customer_id', customer.id)
+
+        let tags: Tag[] = []
+        if (tagsError) {
+          console.error(`Error fetching tags for customer ${customer.id}:`, tagsError)
+          // タグの取得に失敗してもエラーにしない
+        } else if (customerTags && Array.isArray(customerTags)) {
+          // タグ情報を整形
+          customerTags.forEach((ct) => {
+            const tagData = ct.tags as unknown
+            if (tagData && typeof tagData === 'object' && 'id' in tagData) {
+              tags.push(tagData as Tag)
+            }
+          })
+        }
+
+        customersWithTags.push({
+          ...customer,
+          tags
+        })
+      }
+    }
+
+    // 5. 総数を取得（同じフィルタ条件で）
+    let countQuery = supabase
       .from('customers')
       .select('*', { count: 'exact', head: true })
-      .is('deleted_at', null)
     
     // 総数クエリにも同じフィルタを適用
     if (customerType) {
@@ -93,8 +138,10 @@ export async function searchCustomers(
     const totalCount = count || 0
     const totalPages = Math.ceil(totalCount / limit)
 
+    console.log(`Search completed: ${customersWithTags.length} customers with tags`)
+
     return {
-      data: customers || [],
+      data: customersWithTags,
       totalCount,
       page,
       totalPages,

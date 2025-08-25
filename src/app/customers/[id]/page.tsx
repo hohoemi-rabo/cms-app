@@ -135,15 +135,15 @@ export default async function CustomerDetailPage({
       </Card>
 
       {/* タグ */}
-      {customer.tags && customer.tags.length > 0 && (
-        <Card className="mb-6">
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Tag className="h-5 w-5" />
-              タグ
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
+      <Card className="mb-6">
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Tag className="h-5 w-5" />
+            タグ
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          {customer.tags && customer.tags.length > 0 ? (
             <div className="flex flex-wrap gap-2">
               {customer.tags.map((tag) => (
                 <Badge key={tag.id} variant="secondary">
@@ -151,9 +151,11 @@ export default async function CustomerDetailPage({
                 </Badge>
               ))}
             </div>
-          </CardContent>
-        </Card>
-      )}
+          ) : (
+            <p className="text-sm text-muted-foreground">タグが設定されていません</p>
+          )}
+        </CardContent>
+      </Card>
 
       {/* 備考 */}
       {customer.memo && (

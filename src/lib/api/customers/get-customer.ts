@@ -33,6 +33,7 @@ export interface CustomerWithTags {
  * @returns 顧客データ（タグ情報含む）またはnull
  */
 export async function getCustomerById(id: string): Promise<CustomerWithTags | null> {
+  const supabase = supabaseServer
   try {
     // IDの基本的なバリデーション（空文字チェックなど）
     if (!id || typeof id !== 'string') {
@@ -40,7 +41,7 @@ export async function getCustomerById(id: string): Promise<CustomerWithTags | nu
     }
 
     // 1. 顧客の基本情報を取得
-    const { data: customer, error: customerError } = await supabaseServer
+    const { data: customer, error: customerError } = await supabase
       .from('customers')
       .select('*')
       .eq('id', id)
@@ -66,7 +67,8 @@ export async function getCustomerById(id: string): Promise<CustomerWithTags | nu
     }
 
     // 2. 関連タグを取得
-    const { data: customerTags, error: tagsError } = await supabaseServer
+    console.log(`Fetching tags for customer ${id}`)
+    const { data: customerTags, error: tagsError } = await supabase
       .from('customer_tags')
       .select(`
         tags (
@@ -86,15 +88,21 @@ export async function getCustomerById(id: string): Promise<CustomerWithTags | nu
       }
     }
 
+    console.log(`Customer tags data for ${id}:`, customerTags)
+
     // 3. タグ情報を整形
     const tags: Tag[] = []
-    if (customerTags) {
-      customerTags.forEach((ct: any) => {
-        if (ct.tags) {
-          tags.push(ct.tags)
+    if (customerTags && Array.isArray(customerTags)) {
+      customerTags.forEach((ct) => {
+        // Supabaseのクエリは単一オブジェクトを返すことがある
+        const tagData = ct.tags as unknown
+        if (tagData && typeof tagData === 'object' && 'id' in tagData) {
+          tags.push(tagData as Tag)
         }
       })
     }
+    
+    console.log(`Formatted tags for ${id}:`, tags)
 
     return {
       ...customer,

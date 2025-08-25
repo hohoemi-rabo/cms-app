@@ -38,7 +38,7 @@ interface Customer {
   phone?: string | null
   created_at: string
   updated_at: string
-  tags?: Array<{ id: string; name: string }>
+  tags: Array<{ id: string; name: string }>
 }
 
 interface SearchResponse {

@@ -89,9 +89,11 @@ export function validateUpdateCustomerInput(input: UpdateCustomerInput): UpdateV
  * 顧客のタグを更新する（完全置換）
  */
 async function updateCustomerTags(customerId: string, tagIds: string[]): Promise<void> {
+  const supabase = supabaseServer
   try {
+    console.log(`Deleting existing tags for customer ${customerId}`)
     // 既存のタグ関連を削除
-    const { error: deleteError } = await supabaseServer
+    const { error: deleteError } = await supabase
       .from('customer_tags')
       .delete()
       .eq('customer_id', customerId)
@@ -101,6 +103,7 @@ async function updateCustomerTags(customerId: string, tagIds: string[]): Promise
       const errorResponse = handleSupabaseError(deleteError)
       throw new Error(`既存タグの削除に失敗しました: ${errorResponse.message}`)
     }
+    console.log(`Deleted existing tags for customer ${customerId}`)
 
     // 新しいタグ関連を作成
     if (tagIds.length > 0) {
@@ -108,8 +111,9 @@ async function updateCustomerTags(customerId: string, tagIds: string[]): Promise
         customer_id: customerId,
         tag_id: tagId
       }))
+      console.log(`Inserting ${tagIds.length} new tags for customer ${customerId}:`, customerTags)
 
-      const { error: insertError } = await supabaseServer
+      const { error: insertError } = await supabase
         .from('customer_tags')
         .insert(customerTags)
 
@@ -118,6 +122,9 @@ async function updateCustomerTags(customerId: string, tagIds: string[]): Promise
         const errorResponse = handleSupabaseError(insertError)
         throw new Error(`新しいタグの関連付けに失敗しました: ${errorResponse.message}`)
       }
+      console.log(`Successfully inserted ${tagIds.length} tags`)
+    } else {
+      console.log(`No new tags to insert for customer ${customerId}`)
     }
   } catch (error) {
     console.error('Error updating customer tags:', error)
@@ -131,6 +138,7 @@ async function updateCustomerTags(customerId: string, tagIds: string[]): Promise
  * @returns 更新された顧客データ（タグ情報含む）
  */
 export async function updateCustomer(input: UpdateCustomerInput): Promise<CustomerWithTags> {
+  const supabase = supabaseServer
   try {
     // 1. バリデーション
     const validationErrors = validateUpdateCustomerInput(input)
@@ -198,7 +206,7 @@ export async function updateCustomer(input: UpdateCustomerInput): Promise<Custom
 
     // 4. 顧客データを更新（更新するフィールドがある場合のみ）
     if (Object.keys(fieldsToUpdate).length > 1) { // updated_at以外のフィールドがある場合
-      const { error: updateError } = await supabaseServer
+      const { error: updateError } = await supabase
         .from('customers')
         .update(fieldsToUpdate)
         .eq('id', id)
@@ -212,7 +220,9 @@ export async function updateCustomer(input: UpdateCustomerInput): Promise<Custom
 
     // 5. タグの更新（tagIdsが指定されている場合のみ）
     if (tagIds !== undefined) {
+      console.log(`Updating tags for customer ${id}:`, tagIds)
       await updateCustomerTags(id, tagIds)
+      console.log(`Tags updated successfully for customer ${id}`)
     }
 
     // 6. 更新された顧客データを取得
