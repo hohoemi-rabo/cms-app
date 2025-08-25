@@ -1,5 +1,6 @@
 import Link from 'next/link'
 import { Navigation } from './navigation'
+import { ThemeToggle } from '@/components/ui/theme-toggle'
 import { Building2 } from 'lucide-react'
 
 export function Header() {
@@ -14,9 +15,10 @@ export function Header() {
           </Link>
 
           {/* Navigation */}
-          <Navigation />
-
-          {/* Future: User menu will go here in Phase 2 */}
+          <div className="flex items-center gap-4">
+            <Navigation />
+            <ThemeToggle />
+          </div>
         </div>
       </div>
     </header>
