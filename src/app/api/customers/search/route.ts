@@ -7,10 +7,9 @@ export async function GET(request: NextRequest) {
     
     // クエリパラメータの取得
     const searchText = searchParams.get('searchText') || undefined
-    const customerType = (searchParams.get('customerType') || undefined) as 'company' | 'personal' | undefined
     const customerClass = searchParams.get('class') || undefined
-    const tagIdsParam = searchParams.get('tagIds')
-    const tagIds = tagIdsParam ? tagIdsParam.split(',').filter(Boolean) : undefined
+    const tagId = searchParams.get('tagId') || undefined
+    const tagIds = tagId ? [tagId] : undefined
     const page = searchParams.get('page') ? parseInt(searchParams.get('page')!) : 1
     const limit = searchParams.get('limit') ? parseInt(searchParams.get('limit')!) : 20
     const sortBy = (searchParams.get('sortBy') || undefined) as 'name' | 'name_kana' | 'created_at' | 'updated_at' | undefined
@@ -19,7 +18,6 @@ export async function GET(request: NextRequest) {
     // 検索実行
     const result = await searchCustomers({
       searchText,
-      customerType,
       class: customerClass,
       tagIds,
       page,

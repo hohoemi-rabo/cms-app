@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createCustomer } from '@/lib/api/customers/create-customer'
 import { parseCustomerCSVText, checkDuplicates } from '@/lib/utils/csv-import-server'
+import { createOrFindTags, associateCustomerTags } from '@/lib/api/tags/create-or-find-tags'
 
 export async function POST(request: NextRequest) {
   try {
@@ -58,10 +59,22 @@ export async function POST(request: NextRequest) {
       const customerData = unique[i]
       
       try {
-        // タグの処理（カンマ区切りのテキストから配列に変換）
-        // 注：現在はタグ名からタグIDへの変換は省略（タグ管理APIが必要）
+        // タグの処理
+        let tagIds: string[] = []
         if (customerData.tags) {
-          delete customerData.tags // 一旦タグは除外
+          // カンマ区切りのタグ文字列を配列に変換
+          const tagNames = customerData.tags
+            .split(',')
+            .map((tag: string) => tag.trim())
+            .filter((tag: string) => tag.length > 0)
+          
+          if (tagNames.length > 0) {
+            // タグを作成または取得
+            tagIds = await createOrFindTags(tagNames)
+          }
+          
+          // customerDataからタグを除去（createCustomerでは処理しない）
+          delete customerData.tags
         }
         
         // フィールド名はすでに正しくマッピングされている
@@ -69,6 +82,12 @@ export async function POST(request: NextRequest) {
         
         // 顧客作成
         const customer = await createCustomer(createInput)
+        
+        // タグの関連付け
+        if (tagIds.length > 0) {
+          await associateCustomerTags(customer.id, tagIds)
+        }
+        
         results.imported.push(customer)
         results.success++
         

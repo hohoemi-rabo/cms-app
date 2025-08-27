@@ -54,8 +54,8 @@ export default function CustomersPage() {
   const [customers, setCustomers] = useState<Customer[]>([])
   const [loading, setLoading] = useState(true)
   const [searchText, setSearchText] = useState('')
-  const [customerType, setCustomerType] = useState<'all' | 'personal' | 'company'>('all')
   const [selectedClass, setSelectedClass] = useState<string>('')
+  const [selectedTag, setSelectedTag] = useState<string>('')
   const [currentPage, setCurrentPage] = useState(1)
   const [totalPages, setTotalPages] = useState(1)
   const [totalCount, setTotalCount] = useState(0)
@@ -63,9 +63,10 @@ export default function CustomersPage() {
   const [sortBy, setSortBy] = useState<'created_at' | 'name' | 'name_kana'>('created_at')
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc')
   const [classes, setClasses] = useState<string[]>([])
+  const [tags, setTags] = useState<Array<{id: string, name: string}>>([])
   const [showFilters, setShowFilters] = useState(false)
 
-  // クラス一覧を取得
+  // クラス一覧とタグ一覧を取得
   useEffect(() => {
     const fetchClasses = async () => {
       try {
@@ -78,7 +79,21 @@ export default function CustomersPage() {
         console.error('Failed to fetch classes:', error)
       }
     }
+    
+    const fetchTags = async () => {
+      try {
+        const response = await fetch('/api/tags')
+        const data = await response.json()
+        if (response.ok && data.success) {
+          setTags(data.data || [])
+        }
+      } catch (error) {
+        console.error('Failed to fetch tags:', error)
+      }
+    }
+    
     fetchClasses()
+    fetchTags()
   }, [])
 
   // 顧客データ取得
@@ -90,8 +105,8 @@ export default function CustomersPage() {
       
       // フィルタパラメータ
       if (searchText) params.append('searchText', searchText)
-      if (customerType !== 'all') params.append('customerType', customerType)
       if (selectedClass) params.append('class', selectedClass)
+      if (selectedTag) params.append('tagId', selectedTag)
       
       // ページネーション
       params.append('page', currentPage.toString())
@@ -128,7 +143,7 @@ export default function CustomersPage() {
     } finally {
       setLoading(false)
     }
-  }, [searchText, customerType, selectedClass, currentPage, limit, sortBy, sortOrder])
+  }, [searchText, selectedClass, selectedTag, currentPage, limit, sortBy, sortOrder])
 
   // 初回読み込みとフィルタ変更時の再取得
   useEffect(() => {
@@ -138,8 +153,8 @@ export default function CustomersPage() {
   // フィルタリセット
   const handleResetFilters = () => {
     setSearchText('')
-    setCustomerType('all')
     setSelectedClass('')
+    setSelectedTag('')
     setSortBy('created_at')
     setSortOrder('desc')
     setCurrentPage(1)
@@ -248,23 +263,6 @@ export default function CustomersPage() {
           {/* フィルターオプション */}
           {showFilters && (
             <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 gap-4 pt-4 border-t">
-              {/* 顧客種別 */}
-              <div className="space-y-2">
-                <Label>顧客種別</Label>
-                <select
-                  value={customerType}
-                  onChange={(e) => {
-                    setCustomerType(e.target.value as typeof customerType)
-                    setCurrentPage(1)
-                  }}
-                  className="w-full p-2 border rounded bg-background"
-                >
-                  <option value="all">すべて</option>
-                  <option value="personal">個人</option>
-                  <option value="company">法人</option>
-                </select>
-              </div>
-
               {/* クラス */}
               <div className="space-y-2">
                 <Label>クラス</Label>
@@ -279,6 +277,24 @@ export default function CustomersPage() {
                   <option value="">すべて</option>
                   {classes.map(cls => (
                     <option key={cls} value={cls}>{cls}</option>
+                  ))}
+                </select>
+              </div>
+
+              {/* タグ */}
+              <div className="space-y-2">
+                <Label>タグ</Label>
+                <select
+                  value={selectedTag}
+                  onChange={(e) => {
+                    setSelectedTag(e.target.value)
+                    setCurrentPage(1)
+                  }}
+                  className="w-full p-2 border rounded bg-background"
+                >
+                  <option value="">すべて</option>
+                  {tags.map(tag => (
+                    <option key={tag.id} value={tag.id}>{tag.name}</option>
                   ))}
                 </select>
               </div>

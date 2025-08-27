@@ -42,6 +42,7 @@ export async function searchCustomers(
       searchText,
       customerType,
       class: customerClass,
+      tagIds,
       page = 1,
       limit = 20,
       sortBy = 'created_at',
@@ -50,12 +51,45 @@ export async function searchCustomers(
 
     const offset = (page - 1) * limit
 
-    // 1. 顧客の基本情報を取得
+    // 1. タグフィルタがある場合、該当する顧客IDを先に取得
+    let customerIdsFromTag: string[] | undefined
+    if (tagIds && tagIds.length > 0) {
+      const { data: taggedCustomers, error: tagError } = await supabase
+        .from('customer_tags')
+        .select('customer_id')
+        .in('tag_id', tagIds)
+      
+      if (tagError) {
+        const errorResponse = handleSupabaseError(tagError)
+        throw new Error(errorResponse.message)
+      }
+      
+      customerIdsFromTag = taggedCustomers?.map(tc => tc.customer_id) || []
+      
+      // タグフィルタで顧客が0件の場合、早期リターン
+      if (customerIdsFromTag.length === 0) {
+        return {
+          data: [],
+          totalCount: 0,
+          page,
+          totalPages: 0,
+          limit,
+          searchParams: params
+        }
+      }
+    }
+
+    // 2. 顧客の基本情報を取得
     let query = supabase
       .from('customers')
       .select('*')
     
-    // 2. テキスト検索条件を適用（複数フィールド対応）
+    // タグフィルタがある場合、顧客IDでフィルタリング
+    if (customerIdsFromTag) {
+      query = query.in('id', customerIdsFromTag)
+    }
+    
+    // 3. テキスト検索条件を適用（複数フィールド対応）
     if (searchText && searchText.trim()) {
       const searchPattern = `%${searchText.trim()}%`
       
@@ -65,7 +99,7 @@ export async function searchCustomers(
       )
     }
     
-    // 3. その他のフィルタ条件を適用
+    // 4. その他のフィルタ条件を適用
     if (customerType) {
       query = query.eq('customer_type', customerType)
     }
@@ -74,7 +108,7 @@ export async function searchCustomers(
       query = query.eq('class', customerClass)  
     }
     
-    // 4. ソートとページネーション
+    // 5. ソートとページネーション
     query = query
       .order(sortBy, { ascending: sortOrder === 'asc' })
       .range(offset, offset + limit - 1)
@@ -123,10 +157,15 @@ export async function searchCustomers(
       }
     }
 
-    // 5. 総数を取得（同じフィルタ条件で）
+    // 6. 総数を取得（同じフィルタ条件で）
     let countQuery = supabase
       .from('customers')
       .select('*', { count: 'exact', head: true })
+    
+    // タグフィルタがある場合、顧客IDでフィルタリング
+    if (customerIdsFromTag) {
+      countQuery = countQuery.in('id', customerIdsFromTag)
+    }
     
     // 総数クエリにも同じフィルタを適用
     if (searchText && searchText.trim()) {
@@ -144,7 +183,7 @@ export async function searchCustomers(
       countQuery = countQuery.eq('class', customerClass)
     }
 
-    const { count, error: countError } = await countQuery
+    const { count } = await countQuery
 
     const totalCount = count || 0
     const totalPages = Math.ceil(totalCount / limit)
