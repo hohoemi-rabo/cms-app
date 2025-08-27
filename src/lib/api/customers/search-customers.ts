@@ -39,6 +39,7 @@ export async function searchCustomers(
   const supabase = supabaseServer
   try {
     const {
+      searchText,
       customerType,
       class: customerClass,
       page = 1,
@@ -54,7 +55,17 @@ export async function searchCustomers(
       .from('customers')
       .select('*')
     
-    // 2. フィルタ条件を適用
+    // 2. テキスト検索条件を適用（複数フィールド対応）
+    if (searchText && searchText.trim()) {
+      const searchPattern = `%${searchText.trim()}%`
+      
+      // 複数フィールドでOR検索（名前、会社名、メール、電話番号）
+      query = query.or(
+        `name.ilike.${searchPattern},company_name.ilike.${searchPattern},email.ilike.${searchPattern},phone.ilike.${searchPattern}`
+      )
+    }
+    
+    // 3. その他のフィルタ条件を適用
     if (customerType) {
       query = query.eq('customer_type', customerType)
     }
@@ -63,7 +74,7 @@ export async function searchCustomers(
       query = query.eq('class', customerClass)  
     }
     
-    // 3. ソートとページネーション
+    // 4. ソートとページネーション
     query = query
       .order(sortBy, { ascending: sortOrder === 'asc' })
       .range(offset, offset + limit - 1)
@@ -79,8 +90,6 @@ export async function searchCustomers(
     const customersWithTags: CustomerWithTags[] = []
     
     if (customers && customers.length > 0) {
-      console.log(`Fetching tags for ${customers.length} customers`)
-      
       for (const customer of customers) {
         // 各顧客のタグを取得
         const { data: customerTags, error: tagsError } = await supabase
@@ -96,7 +105,6 @@ export async function searchCustomers(
 
         let tags: Tag[] = []
         if (tagsError) {
-          console.error(`Error fetching tags for customer ${customer.id}:`, tagsError)
           // タグの取得に失敗してもエラーにしない
         } else if (customerTags && Array.isArray(customerTags)) {
           // タグ情報を整形
@@ -121,6 +129,13 @@ export async function searchCustomers(
       .select('*', { count: 'exact', head: true })
     
     // 総数クエリにも同じフィルタを適用
+    if (searchText && searchText.trim()) {
+      const searchPattern = `%${searchText.trim()}%`
+      countQuery = countQuery.or(
+        `name.ilike.${searchPattern},company_name.ilike.${searchPattern},email.ilike.${searchPattern},phone.ilike.${searchPattern}`
+      )
+    }
+    
     if (customerType) {
       countQuery = countQuery.eq('customer_type', customerType)
     }
@@ -130,15 +145,9 @@ export async function searchCustomers(
     }
 
     const { count, error: countError } = await countQuery
-    
-    if (countError) {
-      console.error('Count error:', countError)
-    }
 
     const totalCount = count || 0
     const totalPages = Math.ceil(totalCount / limit)
-
-    console.log(`Search completed: ${customersWithTags.length} customers with tags`)
 
     return {
       data: customersWithTags,
@@ -149,7 +158,6 @@ export async function searchCustomers(
       searchParams: params
     }
   } catch (error) {
-    console.error('Error searching customers:', error)
     throw error
   }
 }
@@ -185,7 +193,6 @@ export async function getCustomerSuggestions(
 
     return data || []
   } catch (error) {
-    console.error('Error getting customer suggestions:', error)
     throw error
   }
 }
@@ -212,7 +219,6 @@ export async function getAvailableClasses(): Promise<string[]> {
     const classes = [...new Set(data?.map(c => c.class).filter(Boolean) || [])]
     return classes.sort()
   } catch (error) {
-    console.error('Error getting available classes:', error)
     throw error
   }
 }
