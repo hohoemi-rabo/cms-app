@@ -1,6 +1,5 @@
 import { NextResponse } from 'next/server'
 import { supabaseServer } from '@/lib/supabase/server'
-import { handleApiError } from '@/lib/utils/error-handler'
 
 export async function GET() {
   try {
@@ -12,7 +11,11 @@ export async function GET() {
 
     if (customersError) {
       console.error('Customers count error:', customersError)
-      throw new Error(`顧客数取得エラー: ${customersError.message}`)
+      // エラーでも0を返す
+      return NextResponse.json({
+        customers: 0,
+        tags: 0,
+      })
     }
 
     // タグ数を取得
@@ -22,7 +25,11 @@ export async function GET() {
 
     if (tagsError) {
       console.error('Tags count error:', tagsError)
-      throw new Error(`タグ数取得エラー: ${tagsError.message}`)
+      // エラーでも顧客数だけは返す
+      return NextResponse.json({
+        customers: customersData?.length || 0,
+        tags: 0,
+      })
     }
 
     return NextResponse.json({
@@ -32,6 +39,10 @@ export async function GET() {
 
   } catch (error) {
     console.error('Stats API Error:', error)
-    return handleApiError(error)
+    // エラーが発生しても200 OKで0を返す
+    return NextResponse.json({
+      customers: 0,
+      tags: 0,
+    })
   }
 }

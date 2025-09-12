@@ -1,18 +1,24 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Users, UserPlus, FileText, Database } from 'lucide-react'
 import Link from 'next/link'
+import { supabaseServer } from '@/lib/supabase/server'
 
 async function getStats() {
   try {
-    const response = await fetch(`${process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000'}/api/stats`, {
-      cache: 'no-store' // Always fetch fresh data
-    })
-    
-    if (!response.ok) {
-      throw new Error('Failed to fetch stats')
+    // 直接Supabaseから取得
+    const { data: customersData } = await supabaseServer
+      .from('customers')
+      .select('id')
+      .is('deleted_at', null)
+
+    const { data: tagsData } = await supabaseServer
+      .from('tags')
+      .select('id')
+
+    return {
+      customers: customersData?.length || 0,
+      tags: tagsData?.length || 0,
     }
-    
-    return await response.json()
   } catch (error) {
     console.error('Error fetching stats:', error)
     return { customers: 0, tags: 0 }
