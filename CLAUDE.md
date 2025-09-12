@@ -112,7 +112,59 @@ public/            # Static assets
 - **useFormState**: Hook for server action state management
 - **Validation**: Validate on server, use zod or similar for schema validation
 
+## Invoice System Requirements (Phase 2)
+
+### Overview
+顧客管理システムに請求書作成・管理機能を追加。段階的に骨組みから作って、動作確認しながら拡張していく。
+
+### Key Requirements
+- **請求書番号**: `INV-YYYYMMDD-0001` 形式で自動採番（通し番号）
+- **消費税**: 10%固定、端数切り捨て
+- **明細**: 最大10行、商品マスタからの選択または直接入力
+- **顧客連携**: 既存顧客選択 + 直接入力両対応
+- **PDF出力**: 印刷用PDF生成機能
+- **編集可能**: 発行後も編集可能
+- **自社情報**: 設定画面で管理、請求書に自動反映
+
+### Database Tables
+```sql
+-- 請求書（invoices）
+-- 請求書明細（invoice_items） 
+-- 商品マスタ（products）
+-- 自社情報（company_settings）
+```
+
+### Menu Structure
+```
+請求管理
+├── 請求書一覧（/invoices）
+├── 請求書作成（/invoices/new）
+├── 商品マスタ（/products）  
+└── 自社情報設定（/settings/company）
+```
+
+### Development Phases
+- **Phase 1**: 基盤構築（026-030）- データベース、基本画面
+- **Phase 2**: CRUD機能（031-035）- 作成、編集、削除機能  
+- **Phase 3**: 拡張機能（036-040）- PDF生成、検索、レポート
+
+## Task Management
+
+### Todo Format
+各チケットファイル（docs/026-xxx.md）でタスクを管理：
+```markdown
+## Tasks
+- [ ] タスク名
+- [x] 完了したタスク
+```
+
+### Completion Rules
+1. タスク完了時は `- [ ]` を `- [x]` に変更
+2. 各チケット内で進捗を管理
+3. 全タスク完了時にチケットを完了とみなす
+
 ## Important Notes
 - No testing framework currently installed
 - Tailwind v4 uses a different configuration approach than v3 (CSS-based, not JS config)
 - App Router patterns differ from Pages Router - use modern Next.js 13+ conventions
+- **段階的開発**: 骨組み→動作確認→機能拡張の順で開発
