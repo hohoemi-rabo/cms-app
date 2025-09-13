@@ -11,8 +11,9 @@ import {
   TableRow,
   TableFooter,
 } from '@/components/ui/table'
-import { ArrowLeft, Edit, Trash2, FileText, Calendar, Building2 } from 'lucide-react'
+import { ArrowLeft, Edit, FileText, Calendar, Building2 } from 'lucide-react'
 import { getInvoiceById } from '@/lib/api/invoices/get-invoice'
+import { DeleteInvoiceButton } from '@/components/invoices/delete-invoice-button'
 
 interface InvoiceDetailPageProps {
   params: Promise<{ id: string }>
@@ -70,10 +71,10 @@ export default async function InvoiceDetailPage({ params }: InvoiceDetailPagePro
               編集
             </Button>
           </Link>
-          <Button variant="outline" className="text-destructive">
-            <Trash2 className="h-4 w-4 mr-2" />
-            削除
-          </Button>
+          <DeleteInvoiceButton 
+            invoiceId={invoice.id} 
+            invoiceNumber={invoice.invoice_number} 
+          />
         </div>
       </div>
 
