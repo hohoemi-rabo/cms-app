@@ -30,12 +30,12 @@
 
 ## Tasks
 
-- [ ] Supabase で invoices テーブル作成
-- [ ] Supabase で invoice_items テーブル作成
-- [ ] 外部キー制約の設定
-- [ ] RLS (Row Level Security) ポリシー設定
-- [ ] TypeScript 型定義生成
-- [ ] 基本的なAPI関数作成（作成・取得のみ）
+- [x] Supabase で invoices テーブル作成
+- [x] Supabase で invoice_items テーブル作成
+- [x] 外部キー制約の設定
+- [x] RLS (Row Level Security) ポリシー設定
+- [x] TypeScript 型定義生成
+- [x] 基本的なAPI関数作成（作成・取得のみ）
 
 ## 注意事項
 
@@ -55,7 +55,7 @@
 
 ## 成功基準
 
-- [ ] テーブルが正常に作成される
-- [ ] 基本的なCRUD操作が動作する
-- [ ] TypeScript での型チェックが通る
-- [ ] 簡単なテストデータで動作確認完了
+- [x] テーブルが正常に作成される
+- [x] 基本的なCRUD操作が動作する
+- [x] TypeScript での型チェックが通る
+- [x] 簡単なテストデータで動作確認完了
