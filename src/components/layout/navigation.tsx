@@ -3,15 +3,16 @@
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { cn } from '@/lib/utils'
-import { 
-  Home, 
-  Users, 
-  UserPlus, 
-  FileUp, 
+import {
+  Home,
+  Users,
+  UserPlus,
+  FileUp,
   FileDown,
   Menu,
   FileText,
-  Receipt
+  Receipt,
+  Package
 } from 'lucide-react'
 import {
   Sheet,
@@ -65,6 +66,11 @@ const navigationItems = [
         label: '請求書一覧',
         href: '/invoices',
         icon: FileText
+      },
+      {
+        label: '商品マスタ',
+        href: '/products',
+        icon: Package
       }
     ]
   }
