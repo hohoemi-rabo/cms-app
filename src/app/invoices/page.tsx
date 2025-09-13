@@ -12,6 +12,16 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table'
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog'
 import { FileText, Plus, Eye, Edit, Trash2 } from 'lucide-react'
 import { toast } from 'sonner'
 import { Invoice } from '@/types/invoice'
@@ -20,6 +30,9 @@ export default function InvoicesPage() {
   const router = useRouter()
   const [invoices, setInvoices] = useState<Invoice[]>([])
   const [loading, setLoading] = useState(true)
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false)
+  const [invoiceToDelete, setInvoiceToDelete] = useState<Invoice | null>(null)
+  const [isDeleting, setIsDeleting] = useState(false)
 
   // 請求書一覧を取得
   const fetchInvoices = async () => {
@@ -68,9 +81,39 @@ export default function InvoicesPage() {
     router.push(`/invoices/${id}/edit`)
   }
 
-  const handleDelete = async (id: string) => {
-    // TODO: 削除機能は後で実装
-    toast.info('削除機能は後で実装予定です')
+  // 削除ダイアログを開く
+  const openDeleteDialog = (invoice: Invoice) => {
+    setInvoiceToDelete(invoice)
+    setDeleteDialogOpen(true)
+  }
+
+  // 削除処理
+  const handleDelete = async () => {
+    if (!invoiceToDelete) return
+
+    setIsDeleting(true)
+
+    try {
+      const response = await fetch(`/api/invoices/${invoiceToDelete.id}`, {
+        method: 'DELETE'
+      })
+
+      if (!response.ok) {
+        const errorData = await response.json()
+        throw new Error(errorData.error || '請求書の削除に失敗しました')
+      }
+
+      // 成功時は一覧から削除
+      setInvoices(invoices.filter(invoice => invoice.id !== invoiceToDelete.id))
+      toast.success('請求書を削除しました')
+      setDeleteDialogOpen(false)
+      setInvoiceToDelete(null)
+    } catch (error) {
+      console.error('Delete error:', error)
+      toast.error(error instanceof Error ? error.message : '削除に失敗しました')
+    } finally {
+      setIsDeleting(false)
+    }
   }
 
   return (
@@ -165,7 +208,7 @@ export default function InvoicesPage() {
                           <Button
                             variant="ghost"
                             size="icon"
-                            onClick={() => handleDelete(invoice.id)}
+                            onClick={() => openDeleteDialog(invoice)}
                             title="削除"
                           >
                             <Trash2 className="h-4 w-4" />
@@ -180,6 +223,36 @@ export default function InvoicesPage() {
           )}
         </CardContent>
       </Card>
+
+      {/* 削除確認ダイアログ */}
+      <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>請求書を削除しますか？</AlertDialogTitle>
+            <AlertDialogDescription>
+              {invoiceToDelete && (
+                <>
+                  請求書番号「{invoiceToDelete.invoice_number}」を削除します。
+                  <br />
+                  この操作は取り消せません。
+                </>
+              )}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={isDeleting}>
+              キャンセル
+            </AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleDelete}
+              disabled={isDeleting}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              {isDeleting ? '削除中...' : '削除'}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   )
 }
