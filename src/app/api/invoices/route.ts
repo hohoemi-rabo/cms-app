@@ -33,24 +33,61 @@ export async function POST(request: NextRequest) {
   try {
     const body = await request.json()
     
-    // バリデーション（簡易版）
-    if (!body.issue_date || !body.billing_name || !body.items || body.items.length === 0) {
+    // 詳細バリデーション
+    if (!body.billing_name || typeof body.billing_name !== 'string') {
       return NextResponse.json(
-        {
-          success: false,
-          error: '必須項目が入力されていません'
-        },
+        { success: false, error: '請求先名は必須です' },
         { status: 400 }
       )
+    }
+
+    if (!body.issue_date || typeof body.issue_date !== 'string') {
+      return NextResponse.json(
+        { success: false, error: '発行日は必須です' },
+        { status: 400 }
+      )
+    }
+
+    if (!Array.isArray(body.items) || body.items.length === 0) {
+      return NextResponse.json(
+        { success: false, error: '明細を最低1行は入力してください' },
+        { status: 400 }
+      )
+    }
+
+    // 明細のバリデーション
+    for (let i = 0; i < body.items.length; i++) {
+      const item = body.items[i]
+      
+      if (!item.item_name || typeof item.item_name !== 'string') {
+        return NextResponse.json(
+          { success: false, error: `明細${i + 1}行目: 品目名は必須です` },
+          { status: 400 }
+        )
+      }
+
+      if (typeof item.quantity !== 'number' || item.quantity <= 0) {
+        return NextResponse.json(
+          { success: false, error: `明細${i + 1}行目: 数量は0より大きい数値である必要があります` },
+          { status: 400 }
+        )
+      }
+
+      if (typeof item.unit_price !== 'number' || item.unit_price < 0) {
+        return NextResponse.json(
+          { success: false, error: `明細${i + 1}行目: 単価は0以上の数値である必要があります` },
+          { status: 400 }
+        )
+      }
     }
     
     const data: InvoiceCreateInput = {
       issue_date: body.issue_date,
-      billing_name: body.billing_name,
+      billing_name: body.billing_name.trim(),
       items: body.items.map((item: any) => ({
-        item_name: item.item_name,
-        quantity: Number(item.quantity),
-        unit_price: Number(item.unit_price)
+        item_name: item.item_name.trim(),
+        quantity: item.quantity,
+        unit_price: item.unit_price
       }))
     }
     
