@@ -9,7 +9,9 @@ import {
   UserPlus, 
   FileUp, 
   FileDown,
-  Menu
+  Menu,
+  FileText,
+  Receipt
 } from 'lucide-react'
 import {
   Sheet,
@@ -28,24 +30,43 @@ const navigationItems = [
     icon: Home
   },
   {
-    label: '顧客一覧',
+    label: '顧客管理',
     href: '/customers',
-    icon: Users
+    icon: Users,
+    children: [
+      {
+        label: '顧客一覧',
+        href: '/customers',
+        icon: Users
+      },
+      {
+        label: '顧客登録',
+        href: '/customers/new',
+        icon: UserPlus
+      },
+      {
+        label: 'インポート',
+        href: '/customers/import',
+        icon: FileUp
+      },
+      {
+        label: 'エクスポート',
+        href: '/customers/export',
+        icon: FileDown
+      }
+    ]
   },
   {
-    label: '顧客登録',
-    href: '/customers/new',
-    icon: UserPlus
-  },
-  {
-    label: 'インポート',
-    href: '/customers/import',
-    icon: FileUp
-  },
-  {
-    label: 'エクスポート',
-    href: '/customers/export',
-    icon: FileDown
+    label: '請求管理',
+    href: '/invoices',
+    icon: Receipt,
+    children: [
+      {
+        label: '請求書一覧',
+        href: '/invoices',
+        icon: FileText
+      }
+    ]
   }
 ]
 
@@ -62,6 +83,7 @@ export function Navigation() {
           const isActive = pathname === item.href || 
                           (item.href !== '/' && pathname.startsWith(item.href))
           
+          // シンプルな表示（子要素があっても親のリンクを表示）
           return (
             <Link
               key={item.href}
@@ -100,20 +122,46 @@ export function Navigation() {
                                 (item.href !== '/' && pathname.startsWith(item.href))
                 
                 return (
-                  <Link
-                    key={item.href}
-                    href={item.href}
-                    onClick={() => setIsOpen(false)}
-                    className={cn(
-                      'flex items-center gap-3 text-sm font-medium transition-colors hover:text-primary py-2',
-                      isActive 
-                        ? 'text-foreground' 
-                        : 'text-muted-foreground'
+                  <div key={item.href}>
+                    <Link
+                      href={item.href}
+                      onClick={() => !item.children && setIsOpen(false)}
+                      className={cn(
+                        'flex items-center gap-3 text-sm font-medium transition-colors hover:text-primary py-2',
+                        isActive 
+                          ? 'text-foreground' 
+                          : 'text-muted-foreground'
+                      )}
+                    >
+                      <Icon className="h-4 w-4" />
+                      {item.label}
+                    </Link>
+                    {/* 子要素がある場合は表示 */}
+                    {item.children && (
+                      <div className="ml-6 mt-2 space-y-2">
+                        {item.children.map((child) => {
+                          const ChildIcon = child.icon
+                          const isChildActive = pathname === child.href
+                          return (
+                            <Link
+                              key={child.href}
+                              href={child.href}
+                              onClick={() => setIsOpen(false)}
+                              className={cn(
+                                'flex items-center gap-2 text-sm transition-colors hover:text-primary py-1',
+                                isChildActive 
+                                  ? 'text-foreground' 
+                                  : 'text-muted-foreground'
+                              )}
+                            >
+                              <ChildIcon className="h-3 w-3" />
+                              {child.label}
+                            </Link>
+                          )
+                        })}
+                      </div>
                     )}
-                  >
-                    <Icon className="h-4 w-4" />
-                    {item.label}
-                  </Link>
+                  </div>
                 )
               })}
             </nav>
