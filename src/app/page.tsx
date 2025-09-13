@@ -1,5 +1,5 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
-import { Users, UserPlus, FileText, Database } from 'lucide-react'
+import { Users, UserPlus, FileText, Database, Settings, Package } from 'lucide-react'
 import Link from 'next/link'
 import { supabaseServer } from '@/lib/supabase/server'
 
@@ -61,11 +61,18 @@ export default async function HomePage() {
       color: 'bg-green-50 hover:bg-green-100 text-green-700'
     },
     {
-      title: 'CSVインポート',
-      description: '顧客データを一括登録',
-      href: '/customers/import',
-      icon: FileText,
-      color: 'bg-purple-50 hover:bg-purple-100 text-purple-700'
+      title: '商品マスタ',
+      description: '商品情報を管理します',
+      href: '/products',
+      icon: Package,
+      color: 'bg-orange-50 hover:bg-orange-100 text-orange-700'
+    },
+    {
+      title: '自社情報設定',
+      description: '請求書用の自社情報を設定',
+      href: '/settings/company',
+      icon: Settings,
+      color: 'bg-gray-50 hover:bg-gray-100 text-gray-700'
     }
   ]
 
@@ -102,7 +109,7 @@ export default async function HomePage() {
       {/* Quick Actions */}
       <div className="mb-8">
         <h2 className="text-xl font-semibold mb-4">クイックアクション</h2>
-        <div className="grid gap-4 md:grid-cols-3">
+        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
           {quickActions.map((action) => {
             const Icon = action.icon
             return (

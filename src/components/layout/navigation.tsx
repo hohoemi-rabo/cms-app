@@ -12,7 +12,8 @@ import {
   Menu,
   FileText,
   Receipt,
-  Package
+  Package,
+  Settings
 } from 'lucide-react'
 import {
   Sheet,
@@ -73,6 +74,11 @@ const navigationItems = [
         icon: Package
       }
     ]
+  },
+  {
+    label: '設定',
+    href: '/settings/company',
+    icon: Settings
   }
 ]
 
