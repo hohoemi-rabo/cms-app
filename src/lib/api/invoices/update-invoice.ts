@@ -60,12 +60,15 @@ export async function updateInvoice(id: string, data: InvoiceCreateInput): Promi
     }
 
     // 5. 新しい明細を作成
-    const itemsToInsert = data.items.map((item, index) => ({
+    const itemsToInsert = data.items.map((item: any, index) => ({
       invoice_id: id,
+      product_id: item.product_id || null,
       item_name: item.item_name,
       quantity: item.quantity,
+      unit: item.unit || '個',
       unit_price: item.unit_price,
       amount: item.quantity * item.unit_price,
+      description: item.description || null,
       display_order: index + 1
     }))
 

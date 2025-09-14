@@ -18,10 +18,13 @@ export interface Invoice {
 export interface InvoiceItem {
   id: string
   invoice_id: string
+  product_id?: string | null
   item_name: string
   quantity: number
+  unit?: string
   unit_price: number
   amount: number
+  description?: string | null
   display_order: number
   created_at: string
   updated_at: string
@@ -42,10 +45,13 @@ export interface InvoiceFormData {
 }
 
 export interface InvoiceItemFormData {
+  product_id?: string | null
   item_name: string
   quantity: number
+  unit?: string
   unit_price: number
   amount?: number // 自動計算される
+  description?: string
 }
 
 // API レスポンス用の型定義

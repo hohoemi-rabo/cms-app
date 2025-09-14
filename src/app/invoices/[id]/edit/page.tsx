@@ -9,14 +9,6 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from '@/components/ui/table'
-import {
   AlertDialog,
   AlertDialogAction,
   AlertDialogCancel,
@@ -27,17 +19,11 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from '@/components/ui/alert-dialog'
-import { ArrowLeft, Plus, Trash2, FileText, AlertTriangle } from 'lucide-react'
+import { ArrowLeft, FileText, AlertTriangle, Trash2 } from 'lucide-react'
 import { toast } from 'sonner'
 import { InvoiceWithItems } from '@/types/invoice'
 import { CustomerSelector } from '@/components/invoices/customer-selector'
-
-interface InvoiceItem {
-  item_name: string
-  quantity: number
-  unit_price: number
-  amount: number
-}
+import { InvoiceItemsTable, InvoiceItem } from '@/components/invoices/invoice-items-table'
 
 interface InvoiceForm {
   issue_date: string
@@ -106,12 +92,15 @@ export default function InvoiceEditPage({ params }: InvoiceEditPageProps) {
           customer_id: invoiceData.customer_id || null,
           items: invoiceData.items.length > 0
             ? invoiceData.items.map(item => ({
+                product_id: item.product_id || null,
                 item_name: item.item_name,
                 quantity: item.quantity,
+                unit: item.unit || '個',
                 unit_price: item.unit_price,
-                amount: item.amount
+                amount: item.amount,
+                description: item.description || ''
               }))
-            : [{ item_name: '', quantity: 0, unit_price: 0, amount: 0 }]
+            : [{ item_name: '', quantity: 1, unit: '個', unit_price: 0, amount: 0 }]
         })
       } catch (err) {
         console.error('Error loading invoice:', err)
@@ -124,52 +113,9 @@ export default function InvoiceEditPage({ params }: InvoiceEditPageProps) {
     initializePage()
   }, [params])
 
-  // 金額計算
-  const calculateItemAmount = (quantity: number, unitPrice: number) => {
-    return quantity * unitPrice
-  }
-
-  // 合計金額計算
-  const calculateTotal = () => {
-    return form.items.reduce((sum, item) => sum + item.amount, 0)
-  }
-
-  // 明細行更新
-  const updateItem = (index: number, field: keyof InvoiceItem, value: string | number) => {
-    const updatedItems = [...form.items]
-    const item = { ...updatedItems[index] }
-    
-    if (field === 'item_name') {
-      item[field] = value as string
-    } else if (field === 'quantity' || field === 'unit_price') {
-      const numValue = typeof value === 'string' ? parseFloat(value) || 0 : value
-      item[field] = numValue
-      item.amount = calculateItemAmount(
-        field === 'quantity' ? numValue : item.quantity,
-        field === 'unit_price' ? numValue : item.unit_price
-      )
-    }
-    
-    updatedItems[index] = item
-    setForm({ ...form, items: updatedItems })
-  }
-
-  // 行追加
-  const addItem = () => {
-    if (form.items.length < 10) {
-      setForm({
-        ...form,
-        items: [...form.items, { item_name: '', quantity: 0, unit_price: 0, amount: 0 }]
-      })
-    }
-  }
-
-  // 行削除
-  const removeItem = (index: number) => {
-    if (form.items.length > 1) {
-      const updatedItems = form.items.filter((_, i) => i !== index)
-      setForm({ ...form, items: updatedItems })
-    }
+  // 明細更新ハンドラー
+  const handleItemsChange = (newItems: InvoiceItem[]) => {
+    setForm({ ...form, items: newItems })
   }
 
   // 更新処理
@@ -246,13 +192,6 @@ export default function InvoiceEditPage({ params }: InvoiceEditPageProps) {
     }
   }
 
-  // 金額フォーマット
-  const formatCurrency = (amount: number) => {
-    return new Intl.NumberFormat('ja-JP', {
-      style: 'currency',
-      currency: 'JPY'
-    }).format(amount)
-  }
 
   if (isLoading) {
     return (
@@ -393,84 +332,10 @@ export default function InvoiceEditPage({ params }: InvoiceEditPageProps) {
             </CardDescription>
           </CardHeader>
           <CardContent>
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead className="w-[50px]">No.</TableHead>
-                  <TableHead>品目名</TableHead>
-                  <TableHead className="w-[120px]">数量</TableHead>
-                  <TableHead className="w-[150px]">単価</TableHead>
-                  <TableHead className="w-[150px] text-right">金額</TableHead>
-                  <TableHead className="w-[60px]"></TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {form.items.map((item, index) => (
-                  <TableRow key={index}>
-                    <TableCell>{index + 1}</TableCell>
-                    <TableCell>
-                      <Input
-                        placeholder="商品・サービス名"
-                        value={item.item_name}
-                        onChange={(e) => updateItem(index, 'item_name', e.target.value)}
-                        maxLength={50}
-                      />
-                    </TableCell>
-                    <TableCell>
-                      <Input
-                        type="number"
-                        min="0"
-                        step="1"
-                        placeholder="0"
-                        value={item.quantity || ''}
-                        onChange={(e) => updateItem(index, 'quantity', e.target.value)}
-                      />
-                    </TableCell>
-                    <TableCell>
-                      <Input
-                        type="number"
-                        min="0"
-                        step="1"
-                        placeholder="0"
-                        value={item.unit_price || ''}
-                        onChange={(e) => updateItem(index, 'unit_price', e.target.value)}
-                      />
-                    </TableCell>
-                    <TableCell className="text-right font-medium">
-                      {formatCurrency(item.amount)}
-                    </TableCell>
-                    <TableCell>
-                      <Button
-                        type="button"
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => removeItem(index)}
-                        disabled={form.items.length <= 1}
-                      >
-                        <Trash2 className="h-4 w-4" />
-                      </Button>
-                    </TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-            
-            <div className="flex justify-between items-center mt-4 pt-4 border-t">
-              <Button
-                type="button"
-                variant="outline"
-                onClick={addItem}
-                disabled={form.items.length >= 10}
-              >
-                <Plus className="h-4 w-4 mr-2" />
-                行を追加
-              </Button>
-              <div className="text-right">
-                <p className="text-lg font-bold">
-                  合計: {formatCurrency(calculateTotal())}
-                </p>
-              </div>
-            </div>
+            <InvoiceItemsTable
+              items={form.items}
+              onItemsChange={handleItemsChange}
+            />
           </CardContent>
         </Card>
 

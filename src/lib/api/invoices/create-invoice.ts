@@ -42,12 +42,15 @@ export async function createInvoice(data: InvoiceCreateInput): Promise<Invoice> 
     
     // 4. 明細を作成
     if (data.items.length > 0) {
-      const itemsToInsert = data.items.map((item, index) => ({
+      const itemsToInsert = data.items.map((item: any, index) => ({
         invoice_id: invoice.id,
+        product_id: item.product_id || null,
         item_name: item.item_name,
         quantity: item.quantity,
+        unit: item.unit || '個',
         unit_price: item.unit_price,
         amount: item.quantity * item.unit_price,
+        description: item.description || null,
         display_order: index
       }))
       
