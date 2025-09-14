@@ -265,6 +265,24 @@ export function InvoiceItemsTable({
                       onChange={(e) => updateItem(index, 'item_name', e.target.value)}
                       disabled={readOnly}
                       className="min-w-[200px]"
+                      aria-label={`明細 ${index + 1} の品目名`}
+                      onKeyDown={(e) => {
+                        if (e.key === 'Tab' && !e.shiftKey) {
+                          // Tabで次のフィールド（数量）に移動
+                        } else if (e.key === 'Enter') {
+                          e.preventDefault()
+                          // Enterで次の行の品目名に移動
+                          const nextRowInput = document.querySelector(
+                            `input[aria-label="明細 ${index + 2} の品目名"]`
+                          ) as HTMLInputElement
+                          if (nextRowInput) {
+                            nextRowInput.focus()
+                          } else if (!readOnly && items.length < 10) {
+                            // 最後の行でEnterを押したら新しい行を追加
+                            addItem()
+                          }
+                        }
+                      }}
                     />
                     {!readOnly && (
                       <TooltipProvider>
@@ -298,6 +316,7 @@ export function InvoiceItemsTable({
                     value={item.quantity || ''}
                     onChange={(e) => updateItem(index, 'quantity', e.target.value)}
                     disabled={readOnly}
+                    aria-label={`明細 ${index + 1} の数量`}
                   />
                 </TableCell>
                 <TableCell>
@@ -306,6 +325,7 @@ export function InvoiceItemsTable({
                     onChange={(e) => updateItem(index, 'unit', e.target.value)}
                     disabled={readOnly}
                     placeholder="個"
+                    aria-label={`明細 ${index + 1} の単位`}
                   />
                 </TableCell>
                 <TableCell>
@@ -316,6 +336,7 @@ export function InvoiceItemsTable({
                     value={item.unit_price || ''}
                     onChange={(e) => updateItem(index, 'unit_price', e.target.value)}
                     disabled={readOnly}
+                    aria-label={`明細 ${index + 1} の単価`}
                   />
                 </TableCell>
                 <TableCell className="text-right font-medium">
@@ -418,6 +439,16 @@ export function InvoiceItemsTable({
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 className="pl-10"
+                autoFocus
+                onKeyDown={(e) => {
+                  if (e.key === 'ArrowDown' && searchResults.length > 0) {
+                    e.preventDefault()
+                    const firstCard = document.querySelector('[data-product-card]') as HTMLElement
+                    firstCard?.focus()
+                  } else if (e.key === 'Escape') {
+                    setIsDialogOpen(false)
+                  }
+                }}
               />
             </div>
             <Separator />
@@ -431,8 +462,20 @@ export function InvoiceItemsTable({
                   {searchResults.map((product) => (
                     <Card
                       key={product.id}
-                      className="p-3 cursor-pointer hover:bg-accent"
+                      className="p-3 cursor-pointer hover:bg-accent focus:bg-accent focus:outline-none"
                       onClick={() => handleSelectProduct(product)}
+                      data-product-card
+                      tabIndex={0}
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter' || e.key === ' ') {
+                          e.preventDefault()
+                          handleSelectProduct(product)
+                        } else if (e.key === 'Escape') {
+                          setIsDialogOpen(false)
+                        }
+                      }}
+                      role="button"
+                      aria-label={`商品を選択: ${product.name}`}
                     >
                       <div className="space-y-1">
                         <div className="font-medium">{product.name}</div>
