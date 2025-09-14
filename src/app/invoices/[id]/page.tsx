@@ -14,6 +14,7 @@ import {
 import { ArrowLeft, Edit, FileText, Calendar, Building2 } from 'lucide-react'
 import { getInvoiceById } from '@/lib/api/invoices/get-invoice'
 import { DeleteInvoiceButton } from '@/components/invoices/delete-invoice-button'
+import { InvoicePDFSection } from '@/components/invoices/invoice-pdf-section'
 
 interface InvoiceDetailPageProps {
   params: Promise<{ id: string }>
@@ -165,6 +166,9 @@ export default async function InvoiceDetailPage({ params }: InvoiceDetailPagePro
             </Table>
           </CardContent>
         </Card>
+
+        {/* PDF出力 */}
+        <InvoicePDFSection invoice={invoice} />
 
         {/* 作成・更新日時 */}
         <Card>
