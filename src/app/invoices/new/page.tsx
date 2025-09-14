@@ -16,6 +16,7 @@ import {
   TableRow,
 } from '@/components/ui/table'
 import { ArrowLeft, Plus, Trash2, FileText } from 'lucide-react'
+import { CustomerSelector } from '@/components/invoices/customer-selector'
 
 interface InvoiceItem {
   item_name: string
@@ -27,6 +28,9 @@ interface InvoiceItem {
 interface InvoiceForm {
   issue_date: string
   billing_name: string
+  billing_address?: string
+  billing_honorific?: string
+  customer_id?: string | null
   items: InvoiceItem[]
 }
 
@@ -40,6 +44,9 @@ export default function InvoiceCreatePage() {
   const [form, setForm] = useState<InvoiceForm>({
     issue_date: today,
     billing_name: '',
+    billing_address: '',
+    billing_honorific: '様',
+    customer_id: null,
     items: [
       { item_name: '', quantity: 0, unit_price: 0, amount: 0 },
       { item_name: '', quantity: 0, unit_price: 0, amount: 0 },
@@ -118,6 +125,9 @@ export default function InvoiceCreatePage() {
       const requestData = {
         issue_date: form.issue_date,
         billing_name: form.billing_name.trim(),
+        billing_address: form.billing_address,
+        billing_honorific: form.billing_honorific,
+        customer_id: form.customer_id,
         items: validItems
       }
 
@@ -182,7 +192,7 @@ export default function InvoiceCreatePage() {
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div>
+              <div className="md:col-span-2">
                 <Label htmlFor="issue_date">発行日</Label>
                 <Input
                   id="issue_date"
@@ -190,21 +200,31 @@ export default function InvoiceCreatePage() {
                   value={form.issue_date}
                   onChange={(e) => setForm({ ...form, issue_date: e.target.value })}
                   required
-                />
-              </div>
-              <div>
-                <Label htmlFor="billing_name">請求先名 *</Label>
-                <Input
-                  id="billing_name"
-                  type="text"
-                  placeholder="請求先の会社名または個人名"
-                  value={form.billing_name}
-                  onChange={(e) => setForm({ ...form, billing_name: e.target.value })}
-                  required
-                  maxLength={100}
+                  className="max-w-xs"
                 />
               </div>
             </div>
+
+            <CustomerSelector
+              customerId={form.customer_id}
+              billingName={form.billing_name}
+              billingAddress={form.billing_address}
+              billingHonorific={form.billing_honorific}
+              onCustomerChange={(customer) => {
+                setForm({
+                  ...form,
+                  customer_id: customer?.id || null,
+                })
+              }}
+              onDirectInputChange={(data) => {
+                setForm({
+                  ...form,
+                  billing_name: data.billingName,
+                  billing_address: data.billingAddress || '',
+                  billing_honorific: data.billingHonorific || '様',
+                })
+              }}
+            />
           </CardContent>
         </Card>
 

@@ -30,6 +30,7 @@ import {
 import { ArrowLeft, Plus, Trash2, FileText, AlertTriangle } from 'lucide-react'
 import { toast } from 'sonner'
 import { InvoiceWithItems } from '@/types/invoice'
+import { CustomerSelector } from '@/components/invoices/customer-selector'
 
 interface InvoiceItem {
   item_name: string
@@ -41,6 +42,9 @@ interface InvoiceItem {
 interface InvoiceForm {
   issue_date: string
   billing_name: string
+  billing_address?: string
+  billing_honorific?: string
+  customer_id?: string | null
   items: InvoiceItem[]
 }
 
@@ -60,6 +64,9 @@ export default function InvoiceEditPage({ params }: InvoiceEditPageProps) {
   const [form, setForm] = useState<InvoiceForm>({
     issue_date: '',
     billing_name: '',
+    billing_address: '',
+    billing_honorific: '様',
+    customer_id: null,
     items: []
   })
 
@@ -94,7 +101,10 @@ export default function InvoiceEditPage({ params }: InvoiceEditPageProps) {
         setForm({
           issue_date: invoiceData.issue_date,
           billing_name: invoiceData.billing_name,
-          items: invoiceData.items.length > 0 
+          billing_address: invoiceData.billing_address || '',
+          billing_honorific: invoiceData.billing_honorific || '様',
+          customer_id: invoiceData.customer_id || null,
+          items: invoiceData.items.length > 0
             ? invoiceData.items.map(item => ({
                 item_name: item.item_name,
                 quantity: item.quantity,
@@ -185,6 +195,9 @@ export default function InvoiceEditPage({ params }: InvoiceEditPageProps) {
       const requestData = {
         issue_date: form.issue_date,
         billing_name: form.billing_name.trim(),
+        billing_address: form.billing_address,
+        billing_honorific: form.billing_honorific,
+        customer_id: form.customer_id,
         items: validItems
       }
 
@@ -325,7 +338,7 @@ export default function InvoiceEditPage({ params }: InvoiceEditPageProps) {
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
                 <Label htmlFor="invoice_number">請求書番号</Label>
                 <Input
@@ -346,19 +359,28 @@ export default function InvoiceEditPage({ params }: InvoiceEditPageProps) {
                   required
                 />
               </div>
-              <div>
-                <Label htmlFor="billing_name">請求先名 *</Label>
-                <Input
-                  id="billing_name"
-                  type="text"
-                  placeholder="請求先の会社名または個人名"
-                  value={form.billing_name}
-                  onChange={(e) => setForm({ ...form, billing_name: e.target.value })}
-                  required
-                  maxLength={100}
-                />
-              </div>
             </div>
+
+            <CustomerSelector
+              customerId={form.customer_id}
+              billingName={form.billing_name}
+              billingAddress={form.billing_address}
+              billingHonorific={form.billing_honorific}
+              onCustomerChange={(customer) => {
+                setForm({
+                  ...form,
+                  customer_id: customer?.id || null,
+                })
+              }}
+              onDirectInputChange={(data) => {
+                setForm({
+                  ...form,
+                  billing_name: data.billingName,
+                  billing_address: data.billingAddress || '',
+                  billing_honorific: data.billingHonorific || '様',
+                })
+              }}
+            />
           </CardContent>
         </Card>
 

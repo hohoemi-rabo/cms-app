@@ -28,6 +28,9 @@ export async function createInvoice(data: InvoiceCreateInput): Promise<Invoice> 
         invoice_number: invoiceNumber,
         issue_date: data.issue_date,
         billing_name: data.billing_name,
+        billing_address: data.billing_address || null,
+        billing_honorific: data.billing_honorific || '様',
+        customer_id: data.customer_id || null,
         total_amount: totalAmount
       })
       .select()

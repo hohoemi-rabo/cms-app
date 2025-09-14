@@ -84,6 +84,9 @@ export async function POST(request: NextRequest) {
     const data: InvoiceCreateInput = {
       issue_date: body.issue_date,
       billing_name: body.billing_name.trim(),
+      customer_id: body.customer_id || undefined,
+      billing_address: body.billing_address || undefined,
+      billing_honorific: body.billing_honorific || '様',
       items: body.items.map((item: any) => ({
         item_name: item.item_name.trim(),
         quantity: item.quantity,

@@ -35,6 +35,9 @@ export async function updateInvoice(id: string, data: InvoiceCreateInput): Promi
       .update({
         issue_date: data.issue_date,
         billing_name: data.billing_name,
+        billing_address: data.billing_address || null,
+        billing_honorific: data.billing_honorific || '様',
+        customer_id: data.customer_id || null,
         total_amount: totalAmount,
         updated_at: new Date().toISOString()
       })
