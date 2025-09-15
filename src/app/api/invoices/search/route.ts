@@ -30,7 +30,7 @@ export async function GET(request: NextRequest) {
     const page = parseInt(searchParams.get('page') || '1')
     const limit = parseInt(searchParams.get('limit') || '20')
 
-    // ベースクエリの構築
+    // ベースクエリの構築（削除済みを除外）
     let query = supabase
       .from('invoices')
       .select(`
@@ -43,6 +43,7 @@ export async function GET(request: NextRequest) {
           amount
         )
       `, { count: 'exact' })
+      .is('deleted_at', null)
 
     // テキスト検索（請求書番号、請求先名、備考）
     // あいまい検索対応：正規化してスペースで分割

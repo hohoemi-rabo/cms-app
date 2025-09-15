@@ -29,6 +29,8 @@ import { InvoiceSearchEnhanced } from '@/components/invoices/invoice-search-enha
 import { InvoiceAdvancedSearch, SearchFilters } from '@/components/invoices/invoice-advanced-search'
 import { Badge } from '@/components/ui/badge'
 import { useLocalStorage } from '@/hooks/use-local-storage'
+import { Checkbox } from '@/components/ui/checkbox'
+import { BulkOperationsToolbar } from '@/components/invoices/bulk-operations-toolbar'
 
 export default function InvoicesPage() {
   const router = useRouter()
@@ -40,6 +42,7 @@ export default function InvoicesPage() {
   const [isDeleting, setIsDeleting] = useState(false)
   const [searchQuery, setSearchQuery] = useState(searchParams.get('q') || '')
   const [showAdvanced, setShowAdvanced] = useState(false)
+  const [selectedIds, setSelectedIds] = useState<string[]>([])
 
   // 検索設定をローカルストレージに保存
   const [savedFilters, setSavedFilters] = useLocalStorage<SearchFilters>(
@@ -149,6 +152,31 @@ export default function InvoicesPage() {
     setPagination(prev => ({ ...prev, page: newPage }))
   }, [])
 
+  // 選択処理
+  const handleSelectAll = useCallback((checked: boolean) => {
+    if (checked) {
+      setSelectedIds(invoices.map(invoice => invoice.id))
+    } else {
+      setSelectedIds([])
+    }
+  }, [invoices])
+
+  const handleSelectOne = useCallback((id: string, checked: boolean) => {
+    if (checked) {
+      setSelectedIds(prev => [...prev, id])
+    } else {
+      setSelectedIds(prev => prev.filter(selectedId => selectedId !== id))
+    }
+  }, [])
+
+  const handleClearSelection = useCallback(() => {
+    setSelectedIds([])
+  }, [])
+
+  const handleDeleteComplete = useCallback(() => {
+    searchInvoices()
+  }, [searchInvoices])
+
   useEffect(() => {
     searchInvoices()
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -252,6 +280,13 @@ export default function InvoicesPage() {
         />
       </div>
 
+      {/* 一括操作ツールバー */}
+      <BulkOperationsToolbar
+        selectedIds={selectedIds}
+        onClearSelection={handleClearSelection}
+        onDeleteComplete={handleDeleteComplete}
+      />
+
       {/* 検索結果サマリー */}
       {(searchQuery || filters.dateFrom || filters.dateTo || filters.amountMin || filters.amountMax) && (
         <div className="mb-4 flex flex-wrap items-center gap-2">
@@ -320,6 +355,13 @@ export default function InvoicesPage() {
               <Table>
                 <TableHeader>
                   <TableRow>
+                    <TableHead className="w-12">
+                      <Checkbox
+                        checked={selectedIds.length === invoices.length && invoices.length > 0}
+                        onCheckedChange={handleSelectAll}
+                        aria-label="すべて選択"
+                      />
+                    </TableHead>
                     <TableHead>請求書番号</TableHead>
                     <TableHead>発行日</TableHead>
                     <TableHead>請求先</TableHead>
@@ -329,7 +371,17 @@ export default function InvoicesPage() {
                 </TableHeader>
                 <TableBody>
                   {invoices.map((invoice) => (
-                    <TableRow key={invoice.id}>
+                    <TableRow
+                      key={invoice.id}
+                      className={selectedIds.includes(invoice.id) ? 'bg-muted/50' : ''}
+                    >
+                      <TableCell>
+                        <Checkbox
+                          checked={selectedIds.includes(invoice.id)}
+                          onCheckedChange={(checked) => handleSelectOne(invoice.id, checked as boolean)}
+                          aria-label={`請求書 ${invoice.invoice_number} を選択`}
+                        />
+                      </TableCell>
                       <TableCell className="font-medium">
                         {invoice.invoice_number}
                       </TableCell>

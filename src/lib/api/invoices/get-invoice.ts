@@ -30,14 +30,14 @@ export async function getInvoices(): Promise<Invoice[]> {
  */
 export async function getInvoiceById(id: string): Promise<InvoiceWithItems | null> {
   const supabase = supabaseServer
-  
+
   try {
     // UUIDの形式チェック
     const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i
     if (!uuidRegex.test(id)) {
       return null // 無効なUUID形式の場合はnullを返す
     }
-    
+
     // 1. 請求書基本情報を取得
     const { data: invoice, error: invoiceError } = await supabase
       .from('invoices')
@@ -45,10 +45,15 @@ export async function getInvoiceById(id: string): Promise<InvoiceWithItems | nul
       .eq('id', id)
       .is('deleted_at', null)
       .single()
-    
+
     if (invoiceError) {
       console.error('Invoice fetch error:', invoiceError)
-      // すべてのエラーケースでnullを返して404扱いにする
+      // PGRST116は「レコードが見つからない」を意味するので、nullを返す
+      if (invoiceError.code === 'PGRST116') {
+        console.log('Invoice not found (PGRST116), returning null for 404')
+        return null
+      }
+      // その他のエラーの場合もnullを返して404扱いにする
       return null
     }
     
@@ -56,15 +61,16 @@ export async function getInvoiceById(id: string): Promise<InvoiceWithItems | nul
       return null
     }
     
-    // 2. 明細を取得
+    // 2. 明細を取得（削除済みを除外）
     const { data: items, error: itemsError } = await supabase
       .from('invoice_items')
       .select('*')
       .eq('invoice_id', id)
+      .is('deleted_at', null)
       .order('display_order', { ascending: true })
-    
+
     if (itemsError) {
-      console.error('Invoice items fetch error:', itemsError)
+      console.error('Invoice items fetch error:', itemsError.message, itemsError.code)
       // 明細取得エラーの場合も、基本情報だけで返す
       return {
         ...invoice,
